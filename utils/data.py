@@ -1,5 +1,6 @@
 import pandas as pd
 from typing import Dict, List
+from datetime import datetime
 
 def process_profile_activity(response_data: Dict) -> pd.DataFrame:
     """Process profile activity data into a pandas DataFrame"""
@@ -15,16 +16,50 @@ def process_profile_activity(response_data: Dict) -> pd.DataFrame:
             "author_image": author.get("image_url"),
             "author_url": author.get("url"),
             "post_text": activity.get("text"),
-            "created_at": activity.get("created_at"),
+            "created_at": pd.to_datetime(activity.get("created_at")),
             "shares": metrics.get("shares", 0),
             "comments": metrics.get("comments", 0),
             "likes": metrics.get("likes", 0),
+            "total_engagement": metrics.get("shares", 0) + metrics.get("comments", 0) + metrics.get("likes", 0),
             "reactions": metrics.get("reactions", {}),
             "post_url": activity.get("url")
         }
         activities.append(activity_dict)
     
     return pd.DataFrame(activities)
+
+def filter_data(df: pd.DataFrame, 
+                start_date: datetime = None,
+                end_date: datetime = None,
+                min_engagement: int = None,
+                search_text: str = None) -> pd.DataFrame:
+    """Filter DataFrame based on various criteria"""
+    filtered_df = df.copy()
+    
+    if start_date:
+        filtered_df = filtered_df[filtered_df['created_at'] >= start_date]
+    
+    if end_date:
+        filtered_df = filtered_df[filtered_df['created_at'] <= end_date]
+    
+    if min_engagement is not None:
+        filtered_df = filtered_df[filtered_df['total_engagement'] >= min_engagement]
+    
+    if search_text:
+        text_mask = (
+            filtered_df['post_text'].str.contains(search_text, case=False, na=False) |
+            filtered_df['author_name'].str.contains(search_text, case=False, na=False) |
+            filtered_df['author_occupation'].str.contains(search_text, case=False, na=False)
+        )
+        filtered_df = filtered_df[text_mask]
+    
+    return filtered_df
+
+def sort_data(df: pd.DataFrame, sort_by: str, ascending: bool = False) -> pd.DataFrame:
+    """Sort DataFrame by specified column"""
+    if sort_by in df.columns:
+        return df.sort_values(by=sort_by, ascending=ascending)
+    return df
 
 def format_for_download(df: pd.DataFrame, format: str) -> bytes:
     """Format DataFrame for download"""

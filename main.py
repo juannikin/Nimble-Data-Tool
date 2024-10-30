@@ -1,6 +1,7 @@
 import streamlit as st
+from datetime import datetime, timedelta
 from utils.api import NimbleAPI
-from utils.data import process_profile_activity, format_for_download
+from utils.data import process_profile_activity, format_for_download, filter_data, sort_data
 from utils.ui import setup_page, create_metrics_chart, create_reactions_chart, display_profile_card
 
 def main():
@@ -18,6 +19,48 @@ def main():
         template = st.selectbox(
             "Select Template",
             ["LinkedIn Profile Scraper", "LinkedIn Company Page Scraper"]
+        )
+        
+        # Advanced Filtering Options
+        st.markdown("### Advanced Filters")
+        
+        # Date Range Filter
+        st.markdown("#### Date Range")
+        col1, col2 = st.columns(2)
+        with col1:
+            start_date = st.date_input(
+                "Start Date",
+                datetime.now() - timedelta(days=30)
+            )
+        with col2:
+            end_date = st.date_input(
+                "End Date",
+                datetime.now()
+            )
+        
+        # Engagement Filter
+        min_engagement = st.number_input(
+            "Minimum Total Engagement",
+            min_value=0,
+            value=0,
+            help="Filter posts by minimum total engagement (likes + comments + shares)"
+        )
+        
+        # Text Search
+        search_text = st.text_input(
+            "Search Text",
+            help="Search in post content, author name, and occupation"
+        )
+        
+        # Sorting Options
+        st.markdown("#### Sort By")
+        sort_by = st.selectbox(
+            "Sort Posts By",
+            ["created_at", "total_engagement", "likes", "comments", "shares"]
+        )
+        sort_order = st.radio(
+            "Sort Order",
+            ["Descending", "Ascending"]
         )
     
     # Main Content
@@ -44,8 +87,35 @@ def main():
                     response_data = api.get_profile_activity(urls)
                     df = process_profile_activity(response_data)
                     
+                    # Apply filters
+                    filtered_df = filter_data(
+                        df,
+                        start_date=datetime.combine(start_date, datetime.min.time()),
+                        end_date=datetime.combine(end_date, datetime.max.time()),
+                        min_engagement=min_engagement,
+                        search_text=search_text
+                    )
+                    
+                    # Apply sorting
+                    sorted_df = sort_data(
+                        filtered_df,
+                        sort_by,
+                        ascending=(sort_order == "Ascending")
+                    )
+                    
+                    # Display Metrics Summary
+                    st.markdown("### Data Summary")
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Total Posts", len(sorted_df))
+                    with col2:
+                        st.metric("Total Engagement", sorted_df['total_engagement'].sum())
+                    with col3:
+                        st.metric("Average Engagement", round(sorted_df['total_engagement'].mean(), 2))
+                    
                     # Display Results
-                    for _, row in df.iterrows():
+                    st.markdown("### Posts")
+                    for _, row in sorted_df.iterrows():
                         st.markdown("---")
                         
                         # Profile Information
@@ -59,7 +129,7 @@ def main():
                         
                         # Post Content
                         st.markdown(f"**Post:**\n{row['post_text']}")
-                        st.markdown(f"*Posted on: {row['created_at']}*")
+                        st.markdown(f"*Posted on: {row['created_at'].strftime('%Y-%m-%d %H:%M:%S')}*")
                         
                         # Metrics Visualization
                         col1, col2 = st.columns(2)
@@ -76,12 +146,12 @@ def main():
                             st.plotly_chart(reactions_fig, use_container_width=True)
                     
                     # Download Options
-                    if not df.empty:
+                    if not sorted_df.empty:
                         st.markdown("### Download Data")
                         col1, col2 = st.columns(2)
                         
                         with col1:
-                            csv = format_for_download(df, "csv")
+                            csv = format_for_download(sorted_df, "csv")
                             st.download_button(
                                 "Download CSV",
                                 csv,
@@ -90,7 +160,7 @@ def main():
                             )
                         
                         with col2:
-                            json = format_for_download(df, "json")
+                            json = format_for_download(sorted_df, "json")
                             st.download_button(
                                 "Download JSON",
                                 json,
