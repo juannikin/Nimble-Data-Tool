@@ -1,0 +1,33 @@
+/* Custom styles for Nimble branding */
+.stButton > button {
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 0.5rem 1rem;
+}
+
+.stButton > button:first-child {
+    background-color: #45B6EC;
+    color: white;
+}
+
+.stButton > button:not(:first-child) {
+    background-color: #E30768;
+    color: white;
+}
+
+.sidebar {
+    background-color: #FFFFFF;
+    padding: 1rem;
+}
+
+.header {
+    background-color: #F5F4FC;
+    padding: 1rem;
+    margin-bottom: 2rem;
+}
+
+div[data-testid="stMetricValue"] {
+    font-size: 24px;
+    font-weight: bold;
+    color: #45B6EC;
+}
