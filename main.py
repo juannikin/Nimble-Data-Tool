@@ -5,7 +5,7 @@ import pytz
 import logging
 from utils.api import NimbleAPI
 from utils.data import process_profile_activity, format_for_download, filter_data, sort_data
-from utils.ui import setup_page, create_metrics_chart, create_reactions_chart, display_profile_card
+from utils.ui import setup_page, display_profile_card
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -45,14 +45,6 @@ def main():
                 datetime.now(pytz.UTC)
             )
         
-        # Engagement Filter
-        min_engagement = st.number_input(
-            "Minimum Total Engagement",
-            min_value=0,
-            value=0,
-            help="Filter posts by minimum total engagement (likes + comments + shares)"
-        )
-        
         # Text Search
         search_text = st.text_input(
             "Search Text",
@@ -63,7 +55,7 @@ def main():
         st.markdown("#### Sort By")
         sort_by = st.selectbox(
             "Sort Posts By",
-            ["created_at", "total_engagement", "likes", "comments", "shares"]
+            ["created_at"]
         )
         sort_order = st.radio(
             "Sort Order",
@@ -95,7 +87,6 @@ def main():
                     df = process_profile_activity(response_data)
                     
                     logger.info(f"Initial dataset size: {len(df)}")
-                    logger.info(f"Date range: {df['created_at'].min()} to {df['created_at'].max()}")
                     
                     # Create timezone-aware datetime objects for filtering
                     start_datetime = pytz.UTC.localize(
@@ -112,22 +103,13 @@ def main():
                         )
                     )
                     
-                    logger.info(f"Filtering date range: {start_datetime} to {end_datetime}")
-                    
                     # Apply filters
                     filtered_df = filter_data(
                         df,
                         start_date=start_datetime,
                         end_date=end_datetime,
-                        min_engagement=min_engagement,
                         search_text=search_text
                     )
-                    
-                    # Log engagement statistics
-                    if not filtered_df.empty:
-                        logger.info(f"Engagement stats after filtering:")
-                        logger.info(f"Total engagement: {filtered_df['total_engagement'].sum()}")
-                        logger.info(f"Average engagement: {filtered_df['total_engagement'].mean():.2f}")
                     
                     # Apply sorting
                     sorted_df = sort_data(
@@ -136,17 +118,8 @@ def main():
                         ascending=(sort_order == "Ascending")
                     )
                     
-                    # Display Metrics Summary
-                    st.markdown("### Data Summary")
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        st.metric("Total Posts", len(sorted_df))
-                    with col2:
-                        total_engagement = sorted_df['total_engagement'].sum()
-                        st.metric("Total Engagement", total_engagement)
-                    with col3:
-                        avg_engagement = round(sorted_df['total_engagement'].mean(), 2) if not sorted_df.empty else 0
-                        st.metric("Average Engagement", avg_engagement)
+                    # Display total posts metric
+                    st.metric("Total Posts", len(sorted_df))
                     
                     # Display Results
                     st.markdown("### Posts")
@@ -168,20 +141,6 @@ def main():
                             st.markdown(f"*Posted on: {row['created_at'].strftime('%Y-%m-%d %H:%M:%S %Z')}*")
                         else:
                             st.markdown("*Posted on: Date not available*")
-                        
-                        # Metrics Visualization
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            metrics_fig = create_metrics_chart({
-                                "likes": row["likes"],
-                                "comments": row["comments"],
-                                "shares": row["shares"]
-                            })
-                            st.plotly_chart(metrics_fig, use_container_width=True, key=f'metrics_{row.name}')
-                        
-                        with col2:
-                            reactions_fig = create_reactions_chart(row["reactions"])
-                            st.plotly_chart(reactions_fig, use_container_width=True, key=f'reactions_{row.name}')
                     
                     # Download Options
                     if not sorted_df.empty:

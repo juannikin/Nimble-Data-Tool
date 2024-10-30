@@ -13,7 +13,6 @@ def process_profile_activity(response_data: Dict) -> pd.DataFrame:
     activities = []
     
     for activity in response_data.get("activity", []):
-        metrics = activity.get("metrics", {})
         author = activity.get("author", {})
         
         # Handle created_at datetime conversion with null check
@@ -38,11 +37,6 @@ def process_profile_activity(response_data: Dict) -> pd.DataFrame:
             "author_url": author.get("url"),
             "post_text": activity.get("text"),
             "created_at": created_at,
-            "shares": metrics.get("shares", 0),
-            "comments": metrics.get("comments", 0),
-            "likes": metrics.get("likes", 0),
-            "total_engagement": metrics.get("shares", 0) + metrics.get("comments", 0) + metrics.get("likes", 0),
-            "reactions": metrics.get("reactions", {}),
             "post_url": activity.get("url")
         }
         activities.append(activity_dict)
@@ -52,9 +46,8 @@ def process_profile_activity(response_data: Dict) -> pd.DataFrame:
 def filter_data(df: pd.DataFrame, 
                 start_date: datetime = None,
                 end_date: datetime = None,
-                min_engagement: int = None,
                 search_text: str = None) -> pd.DataFrame:
-    """Filter DataFrame based on various criteria"""
+    """Filter DataFrame based on date and text search"""
     filtered_df = df.copy()
     
     logger.info(f"Initial data size: {len(filtered_df)}")
@@ -88,11 +81,6 @@ def filter_data(df: pd.DataFrame,
         
         # Apply date filtering
         filtered_df = filtered_df[date_mask]
-    
-    if min_engagement is not None:
-        engagement_mask = filtered_df['total_engagement'] >= min_engagement
-        filtered_df = filtered_df[engagement_mask]
-        logger.info(f"Records after engagement filter: {len(filtered_df)}")
     
     if search_text:
         text_mask = (
