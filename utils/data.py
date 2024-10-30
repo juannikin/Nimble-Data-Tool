@@ -1,6 +1,7 @@
 import pandas as pd
 from typing import Dict, List
 from datetime import datetime
+import pytz
 
 def process_profile_activity(response_data: Dict) -> pd.DataFrame:
     """Process profile activity data into a pandas DataFrame"""
@@ -16,7 +17,7 @@ def process_profile_activity(response_data: Dict) -> pd.DataFrame:
             "author_image": author.get("image_url"),
             "author_url": author.get("url"),
             "post_text": activity.get("text"),
-            "created_at": pd.to_datetime(activity.get("created_at")),
+            "created_at": pd.to_datetime(activity.get("created_at")).tz_localize('UTC'),
             "shares": metrics.get("shares", 0),
             "comments": metrics.get("comments", 0),
             "likes": metrics.get("likes", 0),
@@ -37,9 +38,15 @@ def filter_data(df: pd.DataFrame,
     filtered_df = df.copy()
     
     if start_date:
+        # Ensure start_date is timezone-aware
+        if start_date.tzinfo is None:
+            start_date = pytz.UTC.localize(start_date)
         filtered_df = filtered_df[filtered_df['created_at'] >= start_date]
     
     if end_date:
+        # Ensure end_date is timezone-aware
+        if end_date.tzinfo is None:
+            end_date = pytz.UTC.localize(end_date)
         filtered_df = filtered_df[filtered_df['created_at'] <= end_date]
     
     if min_engagement is not None:

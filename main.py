@@ -1,5 +1,6 @@
 import streamlit as st
 from datetime import datetime, timedelta
+import pytz
 from utils.api import NimbleAPI
 from utils.data import process_profile_activity, format_for_download, filter_data, sort_data
 from utils.ui import setup_page, create_metrics_chart, create_reactions_chart, display_profile_card
@@ -30,12 +31,12 @@ def main():
         with col1:
             start_date = st.date_input(
                 "Start Date",
-                datetime.now() - timedelta(days=30)
+                datetime.now(pytz.UTC) - timedelta(days=30)
             )
         with col2:
             end_date = st.date_input(
                 "End Date",
-                datetime.now()
+                datetime.now(pytz.UTC)
             )
         
         # Engagement Filter
@@ -87,11 +88,11 @@ def main():
                     response_data = api.get_profile_activity(urls)
                     df = process_profile_activity(response_data)
                     
-                    # Apply filters
+                    # Apply filters with timezone-aware datetime objects
                     filtered_df = filter_data(
                         df,
-                        start_date=datetime.combine(start_date, datetime.min.time()),
-                        end_date=datetime.combine(end_date, datetime.max.time()),
+                        start_date=datetime.combine(start_date, datetime.min.time(), tzinfo=pytz.UTC),
+                        end_date=datetime.combine(end_date, datetime.max.time(), tzinfo=pytz.UTC),
                         min_engagement=min_engagement,
                         search_text=search_text
                     )
@@ -129,7 +130,7 @@ def main():
                         
                         # Post Content
                         st.markdown(f"**Post:**\n{row['post_text']}")
-                        st.markdown(f"*Posted on: {row['created_at'].strftime('%Y-%m-%d %H:%M:%S')}*")
+                        st.markdown(f"*Posted on: {row['created_at'].strftime('%Y-%m-%d %H:%M:%S %Z')}*")
                         
                         # Metrics Visualization
                         col1, col2 = st.columns(2)
