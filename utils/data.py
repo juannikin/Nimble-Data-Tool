@@ -17,7 +17,7 @@ def process_profile_activity(response_data: Dict) -> pd.DataFrame:
             "author_image": author.get("image_url"),
             "author_url": author.get("url"),
             "post_text": activity.get("text"),
-            "created_at": pd.to_datetime(activity.get("created_at")).tz_localize('UTC'),
+            "created_at": pd.to_datetime(activity.get("created_at")).tz_convert('UTC'),
             "shares": metrics.get("shares", 0),
             "comments": metrics.get("comments", 0),
             "likes": metrics.get("likes", 0),
@@ -37,16 +37,24 @@ def filter_data(df: pd.DataFrame,
     """Filter DataFrame based on various criteria"""
     filtered_df = df.copy()
     
+    # Ensure DataFrame's created_at column is in UTC
+    if 'created_at' in filtered_df.columns:
+        filtered_df['created_at'] = pd.to_datetime(filtered_df['created_at']).dt.tz_convert('UTC')
+    
     if start_date:
-        # Ensure start_date is timezone-aware
+        # Convert start_date to UTC timezone
         if start_date.tzinfo is None:
-            start_date = pytz.UTC.localize(start_date)
+            start_date = start_date.replace(tzinfo=pytz.UTC)
+        else:
+            start_date = start_date.astimezone(pytz.UTC)
         filtered_df = filtered_df[filtered_df['created_at'] >= start_date]
     
     if end_date:
-        # Ensure end_date is timezone-aware
+        # Convert end_date to UTC timezone
         if end_date.tzinfo is None:
-            end_date = pytz.UTC.localize(end_date)
+            end_date = end_date.replace(tzinfo=pytz.UTC)
+        else:
+            end_date = end_date.astimezone(pytz.UTC)
         filtered_df = filtered_df[filtered_df['created_at'] <= end_date]
     
     if min_engagement is not None:

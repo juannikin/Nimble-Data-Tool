@@ -88,11 +88,18 @@ def main():
                     response_data = api.get_profile_activity(urls)
                     df = process_profile_activity(response_data)
                     
-                    # Apply filters with timezone-aware datetime objects
+                    # Create timezone-aware datetime objects for filtering
+                    start_datetime = datetime.combine(start_date, datetime.min.time())
+                    start_datetime = pytz.UTC.localize(start_datetime)
+                    
+                    end_datetime = datetime.combine(end_date, datetime.max.time())
+                    end_datetime = pytz.UTC.localize(end_datetime)
+                    
+                    # Apply filters
                     filtered_df = filter_data(
                         df,
-                        start_date=datetime.combine(start_date, datetime.min.time(), tzinfo=pytz.UTC),
-                        end_date=datetime.combine(end_date, datetime.max.time(), tzinfo=pytz.UTC),
+                        start_date=start_datetime,
+                        end_date=end_datetime,
                         min_engagement=min_engagement,
                         search_text=search_text
                     )
