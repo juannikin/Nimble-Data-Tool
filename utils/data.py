@@ -11,13 +11,27 @@ def process_profile_activity(response_data: Dict) -> pd.DataFrame:
         metrics = activity.get("metrics", {})
         author = activity.get("author", {})
         
+        # Handle created_at datetime conversion with null check
+        created_at = activity.get("created_at")
+        if created_at:
+            try:
+                created_at = pd.to_datetime(created_at)
+                if created_at.tzinfo is None:
+                    created_at = created_at.tz_localize('UTC')
+                else:
+                    created_at = created_at.tz_convert('UTC')
+            except (ValueError, TypeError):
+                created_at = None
+        else:
+            created_at = None
+        
         activity_dict = {
             "author_name": author.get("title"),
             "author_occupation": author.get("occupation"),
             "author_image": author.get("image_url"),
             "author_url": author.get("url"),
             "post_text": activity.get("text"),
-            "created_at": pd.to_datetime(activity.get("created_at")).tz_convert('UTC'),
+            "created_at": created_at,
             "shares": metrics.get("shares", 0),
             "comments": metrics.get("comments", 0),
             "likes": metrics.get("likes", 0),
@@ -37,25 +51,31 @@ def filter_data(df: pd.DataFrame,
     """Filter DataFrame based on various criteria"""
     filtered_df = df.copy()
     
-    # Ensure DataFrame's created_at column is in UTC
+    # Handle date filtering only for non-null created_at values
     if 'created_at' in filtered_df.columns:
-        filtered_df['created_at'] = pd.to_datetime(filtered_df['created_at']).dt.tz_convert('UTC')
-    
-    if start_date:
-        # Convert start_date to UTC timezone
-        if start_date.tzinfo is None:
-            start_date = start_date.replace(tzinfo=pytz.UTC)
-        else:
-            start_date = start_date.astimezone(pytz.UTC)
-        filtered_df = filtered_df[filtered_df['created_at'] >= start_date]
-    
-    if end_date:
-        # Convert end_date to UTC timezone
-        if end_date.tzinfo is None:
-            end_date = end_date.replace(tzinfo=pytz.UTC)
-        else:
-            end_date = end_date.astimezone(pytz.UTC)
-        filtered_df = filtered_df[filtered_df['created_at'] <= end_date]
+        # Create a mask for non-null dates
+        date_mask = filtered_df['created_at'].notna()
+        
+        if start_date:
+            # Convert start_date to UTC timezone
+            if start_date.tzinfo is None:
+                start_date = start_date.replace(tzinfo=pytz.UTC)
+            else:
+                start_date = start_date.astimezone(pytz.UTC)
+            # Update mask for start date
+            date_mask &= (filtered_df['created_at'] >= start_date)
+        
+        if end_date:
+            # Convert end_date to UTC timezone
+            if end_date.tzinfo is None:
+                end_date = end_date.replace(tzinfo=pytz.UTC)
+            else:
+                end_date = end_date.astimezone(pytz.UTC)
+            # Update mask for end date
+            date_mask &= (filtered_df['created_at'] <= end_date)
+        
+        # Apply date filtering
+        filtered_df = filtered_df[date_mask]
     
     if min_engagement is not None:
         filtered_df = filtered_df[filtered_df['total_engagement'] >= min_engagement]
