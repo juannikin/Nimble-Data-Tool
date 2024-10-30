@@ -145,7 +145,7 @@ def main():
                     # Download Options
                     if not sorted_df.empty:
                         st.markdown("### Download Data")
-                        col1, col2, col3, col4 = st.columns(4)
+                        col1, col2, col3 = st.columns(3)
                         
                         with col1:
                             csv = format_for_download(sorted_df, "csv")
@@ -172,15 +172,6 @@ def main():
                                 excel,
                                 "linkedin_data.xlsx",
                                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                            )
-                        
-                        with col4:
-                            pdf = format_for_download(sorted_df, "pdf")
-                            st.download_button(
-                                "Download PDF",
-                                pdf,
-                                "linkedin_data.pdf",
-                                "application/pdf"
                             )
                 
                 else:
