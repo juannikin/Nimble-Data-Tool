@@ -147,11 +147,11 @@ def main():
                                 "comments": row["comments"],
                                 "shares": row["shares"]
                             })
-                            st.plotly_chart(metrics_fig, use_container_width=True)
+                            st.plotly_chart(metrics_fig, use_container_width=True, key=f'metrics_{row.name}')
                         
                         with col2:
                             reactions_fig = create_reactions_chart(row["reactions"])
-                            st.plotly_chart(reactions_fig, use_container_width=True)
+                            st.plotly_chart(reactions_fig, use_container_width=True, key=f'reactions_{row.name}')
                     
                     # Download Options
                     if not sorted_df.empty:
