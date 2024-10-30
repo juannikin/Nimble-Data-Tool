@@ -1,9 +1,15 @@
 import streamlit as st
+import pandas as pd
 from datetime import datetime, timedelta
 import pytz
+import logging
 from utils.api import NimbleAPI
 from utils.data import process_profile_activity, format_for_download, filter_data, sort_data
 from utils.ui import setup_page, create_metrics_chart, create_reactions_chart, display_profile_card
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def main():
     setup_page()
@@ -88,6 +94,9 @@ def main():
                     response_data = api.get_profile_activity(urls)
                     df = process_profile_activity(response_data)
                     
+                    logger.info(f"Initial dataset size: {len(df)}")
+                    logger.info(f"Date range: {df['created_at'].min()} to {df['created_at'].max()}")
+                    
                     # Create timezone-aware datetime objects for filtering
                     start_datetime = pytz.UTC.localize(
                         datetime.combine(
@@ -103,6 +112,8 @@ def main():
                         )
                     )
                     
+                    logger.info(f"Filtering date range: {start_datetime} to {end_datetime}")
+                    
                     # Apply filters
                     filtered_df = filter_data(
                         df,
@@ -111,6 +122,12 @@ def main():
                         min_engagement=min_engagement,
                         search_text=search_text
                     )
+                    
+                    # Log engagement statistics
+                    if not filtered_df.empty:
+                        logger.info(f"Engagement stats after filtering:")
+                        logger.info(f"Total engagement: {filtered_df['total_engagement'].sum()}")
+                        logger.info(f"Average engagement: {filtered_df['total_engagement'].mean():.2f}")
                     
                     # Apply sorting
                     sorted_df = sort_data(
@@ -125,9 +142,11 @@ def main():
                     with col1:
                         st.metric("Total Posts", len(sorted_df))
                     with col2:
-                        st.metric("Total Engagement", sorted_df['total_engagement'].sum())
+                        total_engagement = sorted_df['total_engagement'].sum()
+                        st.metric("Total Engagement", total_engagement)
                     with col3:
-                        st.metric("Average Engagement", round(sorted_df['total_engagement'].mean(), 2))
+                        avg_engagement = round(sorted_df['total_engagement'].mean(), 2) if not sorted_df.empty else 0
+                        st.metric("Average Engagement", avg_engagement)
                     
                     # Display Results
                     st.markdown("### Posts")
