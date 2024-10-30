@@ -3,6 +3,8 @@ from typing import Dict, List
 from datetime import datetime
 import pytz
 import logging
+from fpdf import FPDF
+import io
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -106,4 +108,34 @@ def format_for_download(df: pd.DataFrame, format: str) -> bytes:
         return df.to_csv(index=False).encode('utf-8')
     elif format == "json":
         return df.to_json(orient="records").encode('utf-8')
+    elif format == "excel":
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='LinkedIn Data')
+        return output.getvalue()
+    elif format == "pdf":
+        pdf = FPDF()
+        pdf.add_page()
+        
+        # Set up fonts
+        pdf.set_font("Arial", "B", 16)
+        pdf.cell(0, 10, "LinkedIn Data Export", ln=True, align='C')
+        pdf.ln(10)
+        
+        # Add data
+        pdf.set_font("Arial", "B", 12)
+        for col in df.columns:
+            pdf.cell(40, 10, str(col), border=1)
+        pdf.ln()
+        
+        pdf.set_font("Arial", "", 10)
+        for _, row in df.iterrows():
+            for item in row:
+                # Truncate long text to fit in PDF cell
+                text = str(item)[:30] + "..." if len(str(item)) > 30 else str(item)
+                pdf.cell(40, 10, text, border=1)
+            pdf.ln()
+        
+        return pdf.output(dest='S').encode('latin-1')
+    
     raise ValueError(f"Unsupported format: {format}")
