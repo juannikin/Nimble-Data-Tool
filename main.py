@@ -89,11 +89,19 @@ def main():
                     df = process_profile_activity(response_data)
                     
                     # Create timezone-aware datetime objects for filtering
-                    start_datetime = datetime.combine(start_date, datetime.min.time())
-                    start_datetime = pytz.UTC.localize(start_datetime)
+                    start_datetime = pytz.UTC.localize(
+                        datetime.combine(
+                            start_date,
+                            datetime.min.time().replace(hour=0, minute=0, second=0)
+                        )
+                    )
                     
-                    end_datetime = datetime.combine(end_date, datetime.max.time())
-                    end_datetime = pytz.UTC.localize(end_datetime)
+                    end_datetime = pytz.UTC.localize(
+                        datetime.combine(
+                            end_date,
+                            datetime.min.time().replace(hour=23, minute=59, second=59)
+                        )
+                    )
                     
                     # Apply filters
                     filtered_df = filter_data(
@@ -137,7 +145,10 @@ def main():
                         
                         # Post Content
                         st.markdown(f"**Post:**\n{row['post_text']}")
-                        st.markdown(f"*Posted on: {row['created_at'].strftime('%Y-%m-%d %H:%M:%S %Z')}*")
+                        if pd.notnull(row['created_at']):
+                            st.markdown(f"*Posted on: {row['created_at'].strftime('%Y-%m-%d %H:%M:%S %Z')}*")
+                        else:
+                            st.markdown("*Posted on: Date not available*")
                         
                         # Metrics Visualization
                         col1, col2 = st.columns(2)

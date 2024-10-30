@@ -2,6 +2,11 @@ import pandas as pd
 from typing import Dict, List
 from datetime import datetime
 import pytz
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def process_profile_activity(response_data: Dict) -> pd.DataFrame:
     """Process profile activity data into a pandas DataFrame"""
@@ -22,6 +27,7 @@ def process_profile_activity(response_data: Dict) -> pd.DataFrame:
                     created_at = created_at.tz_convert('UTC')
             except (ValueError, TypeError):
                 created_at = None
+                logger.warning(f"Failed to parse datetime: {activity.get('created_at')}")
         else:
             created_at = None
         
@@ -51,34 +57,42 @@ def filter_data(df: pd.DataFrame,
     """Filter DataFrame based on various criteria"""
     filtered_df = df.copy()
     
+    logger.info(f"Initial data size: {len(filtered_df)}")
+    logger.info(f"Filtering parameters - Start date: {start_date}, End date: {end_date}")
+    
     # Handle date filtering only for non-null created_at values
     if 'created_at' in filtered_df.columns:
         # Create a mask for non-null dates
         date_mask = filtered_df['created_at'].notna()
+        logger.info(f"Records with valid dates: {date_mask.sum()}")
         
         if start_date:
-            # Convert start_date to UTC timezone
+            # Convert start_date to UTC timezone if needed
             if start_date.tzinfo is None:
                 start_date = start_date.replace(tzinfo=pytz.UTC)
             else:
                 start_date = start_date.astimezone(pytz.UTC)
             # Update mask for start date
             date_mask &= (filtered_df['created_at'] >= start_date)
+            logger.info(f"Records after start date filter: {date_mask.sum()}")
         
         if end_date:
-            # Convert end_date to UTC timezone
+            # Convert end_date to UTC timezone if needed
             if end_date.tzinfo is None:
                 end_date = end_date.replace(tzinfo=pytz.UTC)
             else:
                 end_date = end_date.astimezone(pytz.UTC)
             # Update mask for end date
             date_mask &= (filtered_df['created_at'] <= end_date)
+            logger.info(f"Records after end date filter: {date_mask.sum()}")
         
         # Apply date filtering
         filtered_df = filtered_df[date_mask]
     
     if min_engagement is not None:
-        filtered_df = filtered_df[filtered_df['total_engagement'] >= min_engagement]
+        engagement_mask = filtered_df['total_engagement'] >= min_engagement
+        filtered_df = filtered_df[engagement_mask]
+        logger.info(f"Records after engagement filter: {len(filtered_df)}")
     
     if search_text:
         text_mask = (
@@ -87,7 +101,9 @@ def filter_data(df: pd.DataFrame,
             filtered_df['author_occupation'].str.contains(search_text, case=False, na=False)
         )
         filtered_df = filtered_df[text_mask]
+        logger.info(f"Records after text search: {len(filtered_df)}")
     
+    logger.info(f"Final filtered data size: {len(filtered_df)}")
     return filtered_df
 
 def sort_data(df: pd.DataFrame, sort_by: str, ascending: bool = False) -> pd.DataFrame:
