@@ -1,0 +1,142 @@
+Here’s a comprehensive prompt that includes clear branding, UI, and functionality instructions to ensure Replit AI can build a cohesive and branded engineering-as-marketing web app for **Nimble** without requiring additional images.
+
+---
+
+**Prompt:**
+
+Create a web app for **Nimble** that serves as an interactive tool to showcase Nimble’s real-time data pipeline capabilities through our API offerings. This app should look and feel like an official Nimble product and offer potential users a hands-on experience with our data tools. Below are the detailed requirements for branding, UI design, and core functionalities.
+
+### 1. **Branding and UI Design**
+
+#### a. **Color Palette**
+   - **Primary Colors**:
+      - Light Purple (#F5F4FC): Used for backgrounds to give a clean and modern look.
+      - Blue (#45B6EC): Used for primary buttons and highlights.
+      - Dark Gray (#2D2D2D): Used for text and icons.
+      - White (#FFFFFF): Used for backgrounds and panels.
+      - Accent Colors:
+         - Pink (#E30768): For secondary buttons and certain highlights.
+         - Light Gray (#EFEFEF): For borders and dividers.
+
+#### b. **Typography**
+   - **Font Style**: Use a modern, sans-serif font, similar to **Source Sans Pro** for readability and minimalism.
+   - **Font Sizes**:
+      - Headers: 24px, bold.
+      - Subheaders: 18px, medium.
+      - Body Text: 14px, regular.
+
+#### c. **UI Layout and Components**
+   - **Dashboard Structure**: The main dashboard should have a spacious, grid-like layout. Key sections to include:
+      - **Sidebar (left)**: For navigation with sections like **Dashboard**, **Pipelines**, **Analytics**, and **Playground**.
+      - **Header**: Display API usage and account status at the top, with sections for Data Transferred, Remaining Requests, and Quota.
+      - **Main Display Area**: Central area where users can select templates, input API details, view visualizations, and download data.
+
+   - **Button Design**:
+      - **Primary Buttons**: Blue with white text, rounded edges (10px radius), and slight shadow.
+      - **Secondary Buttons**: Pink with white text or bordered buttons with blue text, rounded edges.
+
+   - **Icons and Visual Style**:
+      - Use simple, minimal icons for sections and actions.
+      - Maintain consistent spacing and padding (20px for most elements).
+
+### 2. **Core Functionalities**
+
+#### a. **Template Selection**
+   - **Functionality**: Allow users to select from different pre-defined API templates, such as **LinkedIn Profile Scraper** and **LinkedIn Company Page Scraper**.
+   - **UI Design**: Use a tile or card layout for each template, each displaying:
+      - Template Name.
+      - Brief description.
+      - A “Select” button to choose the template.
+   - **Action**: Once selected, the app loads the relevant input fields dynamically below.
+
+#### b. **Dynamic Input Fields for API Requests**
+   - **Functionality**: Adjust the input fields based on the selected template. Example:
+      - **LinkedIn Profile Scraper**: Display a multi-line text area labeled “LinkedIn Profile URLs” where users can paste profile URLs, separated by commas.
+      - **LinkedIn Company Page Scraper**: Display a similar text area for company URLs.
+   - **Validation**: Validate input format and show a prompt if the format is incorrect.
+
+#### c. **API Key Input**
+   - **Functionality**: Provide a secure field where users can input their Nimble API key.
+   - **Placement**: Place this field at the top right of the app, with the label “Enter API Key.”
+   - **Error Handling**: If no API key is provided, show a message prompting users to add it before making any API calls.
+
+#### d. **Data Visualization and Response Handling**
+   - **Real-Time Data Display**: After a successful API request, display the response data in a visually organized format.
+      - **LinkedIn Profile Scraper Example**: Parse the response to show each LinkedIn post as a card with the following details:
+         - **Profile Summary**: Display the profile picture, name, title, occupation, and LinkedIn URL.
+         - **Post Content**: Show the text of the post, along with the post date and any attached media (e.g., images, videos).
+         - **Engagement Metrics**: Visualize likes, comments, shares, and reactions in bar charts.
+      - **UI Structure for Each Post**:
+         - **Header**: Profile picture, name, and title.
+         - **Body**: Post content and media.
+         - **Footer**: Engagement metrics as a chart or table.
+   - **Download Option**: Provide a button to download this data as a CSV or JSON file.
+
+#### e. **Error and Success Handling**
+   - Display a success notification when data is fetched successfully.
+   - Show clear error messages if the request fails (e.g., due to invalid API key or incorrect input formats).
+
+### 3. **Backend Specifications**
+
+   - **API Calls**: Format requests to Nimble’s API based on user inputs and template selection.
+      - **Example Request**: `GET https://social.webit.live/linkedin/v1/profile/{LINKEDINURLS}/activity?type=posts x-api-key {VALUE}`
+   - **Response Parsing**: Parse and organize JSON responses for display in the UI.
+   - **Data Caching (Optional)**: Optionally cache recent API responses to allow users to view recent results without making repeated requests.
+   
+### 4. **Additional Pages**
+   - **Home/Landing Page**: Briefly introduce Nimble, the tool’s purpose, and a CTA to explore templates.
+   - **Help Section**: Link to documentation and offer a basic FAQ on how to use the app.
+   - **Contact/Support**: Provide an easy way for users to reach out if they encounter issues.
+
+### 5. **LinkedIn Profile Scraper - Expected API Response Example**
+
+This is an example of the expected response for the LinkedIn Profile Scraper, and how to structure data display:
+
+```json
+{
+    "activity": [
+        {
+            "activity_type": "Post",
+            "author": {
+                "title": "Juan Felipe Campos",
+                "occupation": "CEO @ GrowthMasters || Faculty UC Berkeley, EIR 500 Global",
+                "image_url": "https://media.licdn.com/dms/image/v2/D5603AQHq7z6IRlEpaQ/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1694015721976?e=1735776000&v=beta&t=YRQubnQHHJw2KYDhTZ1FqIMkZ7lJgQhitSzZC9ay_co",
+                "public_identifier": "juanfelipecampos",
+                "url": "https://linkedin.com/in/juanfelipecampos"
+            },
+            "text": "Post content here...",
+            "created_at": "2024-10-29T21:12:07.394Z",
+            "attachments": [
+                {
+                    "type": "Video",
+                    "duration": 21800,
+                    "url": "https://dms.licdn.com/playlist/vid/dynamic/D4E05AQHzBegMLGut0Q/BAQS3MGwFM?e=1730872800&v=beta&t=kQW2yyiulESrtpmLw6jiTMOBxd8o_Of1as6xn644Bmk"
+                }
+            ],
+            "metrics": {
+                "shares": 1,
+                "comments": 6,
+                "likes": 59,
+                "reactions": {
+                    "LIKE": 54,
+                    "EMPATHY": 2,
+                    "PRAISE": 2,
+                    "INTEREST": 1
+                }
+            },
+            "urn": "urn:li:activity:7257137148934467585",
+            "url": "https://www.linkedin.com/feed/update/urn:li:activity:7257137148934467585"
+        }
+    ]
+}
+```
+
+### 6. **Data Visualization**
+   - For each post, display the **author info**, **post text**, **created date**, and **engagement metrics** as follows:
+      - **Profile Info**: Profile picture, name, and occupation.
+      - **Text and Attachments**: Post content and embedded media preview (for videos, use thumbnails).
+      - **Metrics Chart**: Use bar charts for likes, comments, shares, and reactions with breakdowns by type.
+
+---
+
+This prompt provides Replit AI with clear instructions on branding, design, and functionality, ensuring a polished, Nimble-branded web app experience for users. Let me know if there’s anything you’d like to add or clarify!
